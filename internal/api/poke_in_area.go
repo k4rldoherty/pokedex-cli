@@ -5,10 +5,10 @@ type PokeInArea struct {
 }
 
 type PokemonEncounter struct {
-	Pokemon Pokemon `json:"pokemon"`
+	Pokemon PokemonInArea `json:"pokemon"`
 }
 
-type Pokemon struct {
+type PokemonInArea struct {
 	Name string `json:"name"`
 	Url  string `json:"url"`
 }

@@ -68,3 +68,29 @@ func (c *Client) GetPokemonInArea(area string) (PokeInArea, error) {
 	}
 	return pokesInArea, nil
 }
+
+func (c *Client) GetPokemonByName(pokemon string) (Pokemon, error) {
+	resourceUrl := URL + "pokemon/" + pokemon
+	var pokemonData Pokemon
+	var data []byte
+	if data, ok := c.cache.Get(resourceUrl); ok {
+		err := json.Unmarshal(data, &pokemonData)
+		if err != nil {
+			return Pokemon{}, nil
+		}
+	}
+	res, err := c.httpClient.Get(resourceUrl)
+	if err != nil {
+		return Pokemon{}, nil
+	}
+	defer res.Body.Close()
+	data, err = io.ReadAll(res.Body)
+	if err != nil {
+		return Pokemon{}, err
+	}
+	c.cache.Add(resourceUrl, data)
+	if err = json.Unmarshal(data, &pokemonData); err != nil {
+		return Pokemon{}, err
+	}
+	return pokemonData, nil
+}

@@ -2,6 +2,7 @@ package repl
 
 import (
 	"fmt"
+	"math/rand"
 	"os"
 
 	"github.com/k4rldoherty/pokedex-cli/internal/config"
@@ -45,6 +46,11 @@ func InitCommands() {
 			name:     "explore",
 			desc:     "Shows a list of all pokemon available in this area",
 			callback: handleExploreCommand,
+		},
+		"catch": {
+			name:     "catch",
+			desc:     "Attempts to catch a pokemon with the name",
+			callback: handleCatchCommand,
 		},
 	}
 }
@@ -109,4 +115,35 @@ func handleExploreCommand(cfg *config.Config, args []string) error {
 		fmt.Println(" - ", p.Pokemon.Name)
 	}
 	return nil
+}
+
+func handleCatchCommand(cfg *config.Config, args []string) error {
+	if len(args) != 1 {
+		return fmt.Errorf("incorrect number of arguments")
+	}
+	pokemon := args[0]
+	fmt.Printf("Throwing a Pokeball at %v...\n", pokemon)
+	if pk, ok := cfg.PokeDex.CaughtPokemon[pokemon]; ok {
+		fmt.Println("Already caught", pk.Name)
+		return nil
+	}
+	p, e := cfg.Client.GetPokemonByName(pokemon)
+	if e != nil {
+		return fmt.Errorf("cannot find pokemon of this name... try again")
+	}
+	if caughtSuccessfully := attemptCatch(p.BaseExperience); caughtSuccessfully {
+		cfg.PokeDex.CaughtPokemon[p.Name] = p
+		fmt.Printf("%v was caught!\n", p.Name)
+	} else {
+		fmt.Printf("%v escaped!\n", p.Name)
+	}
+	return nil
+}
+
+func attemptCatch(experience int) bool {
+	maxExp := 635
+	percentageOfMax := (float64(experience) / float64(maxExp)) * 100
+	catchPercentage := 100 - int(percentageOfMax) + 1
+	randomNum := rand.Intn(100)
+	return randomNum < catchPercentage
 }
