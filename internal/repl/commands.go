@@ -52,6 +52,16 @@ func InitCommands() {
 			desc:     "Attempts to catch a pokemon with the name",
 			callback: handleCatchCommand,
 		},
+		"inspect": {
+			name:     "inspect",
+			desc:     "Inspects a caught pokemon",
+			callback: handleInspectCommand,
+		},
+		"pokedex": {
+			name:     "pokedex",
+			desc:     "Review your caught pokemon",
+			callback: handlePokedexCommand,
+		},
 	}
 }
 
@@ -129,13 +139,47 @@ func handleCatchCommand(cfg *config.Config, args []string) error {
 	}
 	p, e := cfg.Client.GetPokemonByName(pokemon)
 	if e != nil {
-		return fmt.Errorf("cannot find pokemon of this name... try again")
+		return fmt.Errorf("%v", e)
 	}
 	if caughtSuccessfully := attemptCatch(p.BaseExperience); caughtSuccessfully {
 		cfg.PokeDex.CaughtPokemon[p.Name] = p
 		fmt.Printf("%v was caught!\n", p.Name)
 	} else {
 		fmt.Printf("%v escaped!\n", p.Name)
+	}
+	return nil
+}
+
+func handleInspectCommand(cfg *config.Config, args []string) error {
+	if len(args) != 1 {
+		return fmt.Errorf("incorrect number of arguments")
+	}
+	pokemon := args[0]
+	p, ok := cfg.PokeDex.CaughtPokemon[pokemon]
+	if !ok {
+		fmt.Println("you have not caught that pokemon")
+		return nil
+	}
+	fmt.Printf(`
+Name: %v
+Height: %v
+Weight: %v
+`, p.Name, p.Height, p.Weight)
+	fmt.Println("Stats:")
+	for _, v := range p.Stats {
+		fmt.Printf("  -%v: %v\n", v.Stats.Name, v.BaseStat)
+	}
+	fmt.Println("Types:")
+	for _, v := range p.Types {
+		fmt.Printf("  - %v\n", v.Type.Name)
+	}
+	return nil
+}
+
+func handlePokedexCommand(cfg *config.Config, args []string) error {
+	fmt.Println("Your Pokedex:")
+	for k := range cfg.PokeDex.CaughtPokemon {
+		fmt.Println(" - ", k)
 	}
 	return nil
 }

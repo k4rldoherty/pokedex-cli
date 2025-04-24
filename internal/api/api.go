@@ -76,12 +76,12 @@ func (c *Client) GetPokemonByName(pokemon string) (Pokemon, error) {
 	if data, ok := c.cache.Get(resourceUrl); ok {
 		err := json.Unmarshal(data, &pokemonData)
 		if err != nil {
-			return Pokemon{}, nil
+			return Pokemon{}, err
 		}
 	}
 	res, err := c.httpClient.Get(resourceUrl)
 	if err != nil {
-		return Pokemon{}, nil
+		return Pokemon{}, err
 	}
 	defer res.Body.Close()
 	data, err = io.ReadAll(res.Body)
